@@ -79,5 +79,5 @@ using ModelConfig.latest_checkpoint_path
 
 # Version 2 - TODO
 * Make inference much faster by using a more lightweight cnn model. We just need shape recognition. 
-* Reduce memory footprint of the model. 
+* Reduce memory footprint of the model. - lighter model, onnx, quantisation ?
 * a new shape/gesture requires around 10-15 images. Even though this is small, its still a manual process. Why cant we think of encoding the image and doing a vector similarity, this way we can make it few shot for new classes. 
