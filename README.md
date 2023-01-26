@@ -12,6 +12,10 @@ An experimental project idea to see if we can make gestures with the mouse curso
 * Trigger the action corresponding to the sequence. 
 
 
+### Update 26 Nov:
+  * Can we solve this problem using CNN. capture the mouse coordinates and treat it as an image and pass it to a cnn ?
+  * Capture mouse cooordinates works. Now need to figure out how to transform this into an image. 
+
 # Explorations: 
 * How to transform absolute coordinates to relative coordinates. 
 * Which sequence model works with minimal training data. Any pretrained models available publicly ?
