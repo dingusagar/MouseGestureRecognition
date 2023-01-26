@@ -1,5 +1,10 @@
+import os
+import sys
+from pathlib import Path
+
 import torch
 from PIL import Image
+import argparse
 
 from cfg import ModelConfig
 from command_executor import CommandExecutor
@@ -11,11 +16,20 @@ from queue import Queue
 from cfg import GestureRecognitionSettings
 from pynput.mouse import Listener as MouseListener
 from pynput.keyboard import Listener as KeyboardListener
+
+from models.train import start_training
+from split_dir_into_train_test import copy_to_train_test_subdirectories, clean_old_train_test_directories
 from utils import save_drawing, get_logger
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 log = get_logger(__name__)
+
+
+# add current directory to sys path if not present
+THIS_DIRECTORY = str(Path(__file__).parent)
+if THIS_DIRECTORY not in sys.path:
+    sys.path.append(THIS_DIRECTORY)
 
 
 class InteractionState:
@@ -30,22 +44,31 @@ queue.put(state)
 
 
 class Mode:
-    TRAIN = "train"
+    CREATE_DATASET = "create_dataset"
     LIVE = "live"
 
 
 class GestureRecognitionEngine:
 
     def __init__(self,
-                 mode: str  # mode can be train / live
+                 mode: str
                  ):
         self.mode = mode
-        log.info("Initialising Shape Detector Model")
-        self.model = ShapeDetectionModel.load_from_checkpoint(ModelConfig.latest_checkpoint_path,
-                                                              model_cfg=ModelConfig)
-        self.model = self.model.to(device)
-        log.info("Initialing Gesture Command Mappings")
-        self.command_executor = CommandExecutor.from_gesture_mapping(GestureMapping)
+        if mode == Mode.LIVE:
+            log.info("Live Mode")
+            log.info("Initialising Shape Detector Model")
+            self.model = ShapeDetectionModel.load_from_checkpoint(ModelConfig.latest_checkpoint_path,
+                                                                  model_cfg=ModelConfig)
+            self.model = self.model.to(device)
+            log.info("Initialing Gesture Command Mappings")
+            self.command_executor = CommandExecutor.from_gesture_mapping(GestureMapping)
+
+            GestureRecognitionSettings.live_image_dir.mkdir(exist_ok=True)
+        elif mode == Mode.CREATE_DATASET:
+            log.info("Dataset Creation Mode")
+            self.dataset_gesture_name = input("Enter the name of the gesture (eg: circle, zigzag etc) : ")
+            filepath = GestureRecognitionSettings.image_dir / self.dataset_gesture_name # create dir for new shape
+            filepath.mkdir(exist_ok=True)
 
     def predict_image(self, image_path):
         image = Image.open(image_path).convert('RGB')
@@ -71,11 +94,16 @@ class GestureRecognitionEngine:
             log.debug('Gesture capture disabled')
             state.last_mouse_sequence = state.current_mouse_sequence
             log.debug(f'coordinates = {state.last_mouse_sequence}')
-            filepath = save_drawing(state.last_mouse_sequence)
             if self.mode == Mode.LIVE:
+                filepath = GestureRecognitionSettings.live_image_dir
+                filepath = save_drawing(state.last_mouse_sequence, directory=filepath)
                 predicted_gesture = self.predict_image(filepath)
                 log.info(f"Predicted action : {predicted_gesture}")
                 self.command_executor.run_command(predicted_gesture)
+            elif self.mode == Mode.CREATE_DATASET:
+                filepath = GestureRecognitionSettings.image_dir / self.dataset_gesture_name
+                filepath = save_drawing(state.last_mouse_sequence, directory=filepath)
+
             state.last_mouse_sequence = []
             state.current_mouse_sequence = []
         queue.put(state)
@@ -109,5 +137,30 @@ class GestureRecognitionEngine:
 
 
 if __name__ == "__main__":
-    gre = GestureRecognitionEngine(mode=Mode.LIVE)
-    gre.start()
+
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--start', action='store_true')
+    parser.add_argument('--create-dataset', action='store_true')
+    parser.add_argument('--train', action='store_true')
+    args = parser.parse_args()
+    if args.start:
+        gre = GestureRecognitionEngine(mode=Mode.LIVE)
+        gre.start()
+    elif args.create_dataset:
+        gre = GestureRecognitionEngine(mode=Mode.CREATE_DATASET)
+        gre.start()
+    elif args.train:
+        print('Training Shape Detector Model..')
+        clean_old_train_test_directories()
+        copy_to_train_test_subdirectories()
+        start_training()
+    else:
+        print('Check the usage. \n\n '
+              'For Starting the program : \n'
+              'python3 gesture_recognition_engine.py --start\n\n'
+              'For creating dataset for training \n'
+              'python3 gesture_recognition_engine.py --create-dataset')
+
+

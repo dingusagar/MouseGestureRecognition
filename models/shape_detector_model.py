@@ -20,6 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class ShapeDetectionModel(LightningModule):
     def __init__(self, model_cfg):
         super().__init__()
+        print(f'Initialising model {model_cfg.model_name} with classification head for classes : {model_cfg.classes}')
         self.model = timm.create_model(model_cfg.model_name, pretrained=True, num_classes=len(model_cfg.classes))
         data_dir = model_cfg.data_dir
         self.train_dir = os.path.join(data_dir, 'train')
@@ -77,24 +78,3 @@ class ShapeDetectionModel(LightningModule):
             X = X.to(device)
             y_hat = self(X)
             return y_hat
-
-
-if __name__ == "__main__":
-
-    model = ShapeDetectionModel(ModelConfig)
-
-    # Load the datasets
-    image_datasets = {x: datasets.ImageFolder(os.path.join(dataset_dir, x), model.data_transforms[x]) for x in
-                      ['train', 'test']}
-
-    # Create the data loaders
-    dataloaders = {x: DataLoader(image_datasets[x], batch_size=ModelConfig.batch_size, shuffle=True, num_workers=4) for x
-                   in ['train', 'test']}
-
-    callbacks = [
-        EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, mode="min"),
-        ModelCheckpoint(monitor='val_loss', filename='best_checkpoint')
-
-    ]
-    trainer = Trainer(callbacks=callbacks)
-    trainer.fit(model, train_dataloaders=dataloaders['train'], val_dataloaders=dataloaders['test'])

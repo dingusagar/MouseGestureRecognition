@@ -18,3 +18,56 @@ An experimental project idea to see if we can make gestures with the mouse curso
 
 
 
+# Stage 1 Progress
+### Tweaked the idea little bit and simplified it. 
+* Simplified the whole problem by re-thinking it as a image classification instead of sequence classification of x,y coordinates.
+* What we can do is, capture the x,y coordinates of the mouse movements after pressing a hot key like ctrl. 
+* After this, plot these x,y points in as a scatter plot in matplotlib, we can connect the points to get a smooth figure, remove the axis and save the figure. 
+* Now we have simplified the problem to a image classification problem. 
+* We can make use of a variety of lightweight CNN architectures like mobilenet, resnet18 etc to predict the image, there by predicting the gesture.
+* Once we have this shape classifier, we can associate various commands either shell commands or python programs to be run when this gesture is predicted. 
+
+
+### How to run the program. 
+To test run the program, do this.
+```py
+python3 gesture_recognition_engine.py --start
+```
+
+The current model has 3 gestures trained - circle, rectangle, triangle. 
+So you can hold the hot key (ctrl key) and use the mouse curser to draw any of these gestures. 
+On release of the hot key, the model will predict the gesture and execute the corresponding command. 
+All gesture to command mappings are present in gesture_mapping.py
+
+For example, a circle gesture will open google.com in a new tab in the chrome browser. 
+rectangle gesture will open calculator.
+
+These commands are tested on ubuntu system. you could take a look at the gesture_mapping.py and modify the commands to your needs. 
+You could also attach custom python functions to be executed on the detection of these gestures. Check gesture_mapping.py for more details.
+
+
+### How to add new gestures. 
+
+First we need to create a dataset of few images with the new gesture. 
+for that, run the following
+
+```py
+python3 gesture_recognition_engine.py --create-dataset
+```
+
+Now you can hold the hotkey and create a gesture. it will be saved in the images folder. 
+keep doing different variations of this. around 10 to 15 images should be enough. 
+
+Now train the model using this command. 
+```py
+python3 gesture_recognition_engine.py --train
+```
+
+once this model is trained you can use this command to start the gesture recognition program. 
+
+```py
+python3 gesture_recognition_engine.py --start
+```
+
+All configuration and settings are present in cfg.py. You can change the path to the correct model checkpoint 
+using ModelConfig.latest_checkpoint_path
