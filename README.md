@@ -22,7 +22,7 @@ An experimental project idea to see if we can make gestures with the mouse curso
 
 
 
-# Stage 1 Progress
+# Version 1 Progress
 ### Tweaked the idea little bit and simplified it. 
 * Simplified the whole problem by re-thinking it as a image classification instead of sequence classification of x,y coordinates.
 * What we can do is, capture the x,y coordinates of the mouse movements after pressing a hot key like ctrl. 
@@ -75,3 +75,9 @@ python3 gesture_recognition_engine.py --start
 
 All configuration and settings are present in cfg.py. You can change the path to the correct model checkpoint 
 using ModelConfig.latest_checkpoint_path
+
+
+# Version 2 - TODO
+* Make inference much faster by using a more lightweight cnn model. We just need shape recognition. 
+* Reduce memory footprint of the model. 
+* a new shape/gesture requires around 10-15 images. Even though this is small, its still a manual process. Why cant we think of encoding the image and doing a vector similarity, this way we can make it few shot for new classes. 
