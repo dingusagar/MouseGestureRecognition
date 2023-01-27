@@ -1,6 +1,10 @@
 # MouseGestureRecognition
 An experimental project idea to see if we can make gestures with the mouse cursor and detect those gestures to perform certain actions.
 
+#### Here is a quick demo of version 1
+https://user-images.githubusercontent.com/12700858/215024848-907291ca-2944-4cd9-ac93-1874db464655.mp4
+
+
 
 
 # Initial Idea : 
